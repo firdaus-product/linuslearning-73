@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ms-MY">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kemahiran Pemulihan: Gabungan Operasi (+/-)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { box-sizing: border-box; }
+    .activity-card { min-height: 400px; }
+    
+    /* Animasi */
+    @keyframes pulse-bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    .pulse-bounce { animation: pulse-bounce 0.5s ease-out 1; }
+    
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in { animation: fade-in 0.5s ease-out 1; }
+    
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-5px); }
+      100% { transform: translateX(0); }
+    }
+    .shake { animation: shake 0.5s ease; }
+    
+    /* Gaya Asas Display */
+    .num-input {
+      width: 100px; text-align: center; font-weight: bold;
+      font-size: 1.5rem; padding: 0.5rem; border-width: 2px;
+      border-radius: 0.5rem;
+    }
+    .num-display {
+      min-width: 100px; min-height: 62px; 
+      padding: 0.5rem 1rem; border-width: 2px;
+      border-radius: 0.5rem; font-weight: bold;
+      font-size: 1.5rem; background-color: #f3f4f6;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: all 0.3s ease;
+    }
+    .op-symbol {
+      font-size: 2.25rem; font-weight: bold;
+      color: #4b5563; margin: 0 0.5rem;
+    }
+    
+    /* Aktiviti 1 & 2 */
+    .step-box {
+      border: 2px dashed #9ca3af;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+      transition: all 0.3s ease;
+    }
+    .step-box.active {
+      opacity: 1;
+      border-style: solid;
+    }
+    .step-box.done {
+      opacity: 1;
+      border-style: solid;
+      border-color: #22c55e;
+      background-color: #f0fdf4;
+    }
+
+    /* Aktiviti 4 - Pembina Persamaan */
+    .eq-box {
+      padding: 1rem 1.5rem;
+      border-radius: 0.75rem;
+      font-size: 1.875rem;
+      font-weight: bold;
+      border: 2px solid #d1d5db;
+      background-color: #f9fafb;
+      margin: 0 0.25rem;
+      transition: all 0.4s ease;
+    }
+    .eq-box.op {
+      font-size: 1.5rem;
+      background-color: transparent;
+      border: none;
+    }
+    .eq-box.merged {
+      transform: scale(1.1);
+      border-color: #22c55e;
+      background-color: #dcfce7;
+    }
+    .eq-box.faded {
+      opacity: 0.2;
+      transform: scale(0.8);
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-full">
+
+  <div class="bg-yellow-100 border-b-4 border-yellow-300 p-4 shadow-sm sticky top-0 z-10">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">📚</span>
+        <span id="info-text" class="text-lg font-semibold text-gray-800">
+          Pilih aktiviti untuk mula!
+        </span>
+      </div>
+      <button id="speak-btn"
+              class="bg-yellow-300 hover:bg-yellow-400 text-yellow-800 font-bold py-2 px-4 rounded-full text-xl transition-colors duration-200"
+              onclick="speakInfo()">
+        🔊
+      </button>
+    </div>
+  </div>
+
+  <div class="max-w-6xl mx-auto p-6">
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6 activity-card flex items-center justify-center">
+      <div id="activity-content" class="text-center w-full">
+        <div class="py-16">
+          <div class="text-6xl mb-4">📈📉</div>
+          <h2 class="text-3xl font-bold text-gray-800 mb-4">
+            Kemahiran Pemulihan: Gabungan Operasi (+/-)
+          </h2>
+          <p class="text-xl text-gray-600 mb-8">
+            Teroka bagaimana operasi tambah dan tolak berfungsi bersama.
+          </p>
+          <div class="text-4xl">👇</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg p-6">
+      <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center">Pilih Aktiviti</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+        <button onclick="loadActivity(1)"
+                class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors duration-200">
+          🚌 Perjalanan Bas
+        </button>
+        <button onclick="loadActivity(2)"
+                class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors duration-200">
+          💧 Paras Air
+        </button>
+        <button onclick="loadActivity(3)"
+                class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors duration-200">
+          ⌨️ Kira Ikut Langkah
+        </button>
+        <button onclick="loadActivity(4)"
+                class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors duration-200">
+          🧩 Pembina Persamaan
+        </button>
+        <button onclick="loadActivity(5)"
+                class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg text-lg transition-colors duration-200">
+          🎯 Tembak Belon
+        </button>
+      </div>
+      
+      <div class="flex justify-center gap-4">
+        <button onclick="clearActivity()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg text-lg transition-colors duration-200">
+          🧹 Bersih
+        </button>
+        <button onclick="nextActivity()" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg text-lg transition-colors duration-200">
+          ➡️ Seterusnya
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentActivity = 0;
+    let ttsEnabled = false;
+    let currentInfo = "Pilih aktiviti untuk mula!";
+
+    /* ====== TTS ====== */
+    function speak(text) {
+      if (!ttsEnabled) return;
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      setTimeout(() => {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'ms-MY';
+        u.rate = 0.9; u.pitch = 1.05;
+        const voices = window.speechSynthesis.getVoices();
+        const ms = voices.find(v => v.lang === 'ms-MY' || v.lang?.startsWith('ms'));
+        if (ms) u.voice = ms;
+        window.speechSynthesis.speak(u);
+      }, 100);
+    }
+    function setInfo(text) { currentInfo = text; document.getElementById('info-text').textContent = text; }
+    function speakInfo() {
+      if (!ttsEnabled) {
+        ttsEnabled = true;
+        const btn = document.getElementById('speak-btn');
+        btn.classList.add('bg-green-300', 'hover:bg-green-400');
+        btn.classList.remove('bg-yellow-300', 'hover:bg-yellow-400');
+      }
+      speak(currentInfo);
+    }
+    
+    // Helper penjana nombor
+    const r = (min,max) => Math.floor(Math.random()*(max-min+1))+min;
+
+    /* ====== Router ====== */
+    function loadActivity(n) {
+      currentActivity = n;
+      const content = document.getElementById('activity-content');
+      if (n === 1) return loadActivity1(content);
+      if (n === 2) return loadActivity2(content);
+      if (n === 3) return loadActivity3(content);
+      if (n === 4) return loadActivity4(content);
+      if (n === 5) return loadActivity5(content);
+    }
+    
+    /* === Fungsi Helper untuk 'pulse' elemen === */
+    function pulseElement(el) {
+      if (el) {
+        el.classList.add('pulse-bounce');
+        setTimeout(() => el.classList.remove('pulse-bounce'), 500);
+      }
+    }
+    
+    /* === Fungsi Helper untuk 'shake' elemen === */
+    function shakeElement(el) {
+        if (el) {
+            el.classList.add('shake');
+            setTimeout(() => el.classList.remove('shake'), 500);
+        }
+    }
+
+    /* ====== Aktiviti 1: Perjalanan Bas (A + B - C = ?) ====== */
+    let a1_state = { A: 0, B: 0, C: 0, midResult: 0, finalResult: 0, step: 0 };
+    function loadActivity1(content) {
+      a1_state.A = r(20, 50);
+      a1_state.B = r(10, 30);
+      a1_state.midResult = a1_state.A + a1_state.B;
+      a1_state.C = r(5, a1_state.midResult - 1); 
+      a1_state.finalResult = a1_state.midResult - a1_state.C;
+      a1_state.step = 0;
+      
+      setInfo(`Mula dengan ${a1_state.A} penumpang, ${a1_state.B} naik, ${a1_state.C} turun. Berapa baki?`);
+      content.innerHTML = `
+        <h3 class="text-2xl font-bold text-blue-600 mb-6">🚌 Perjalanan Bas (Kira Kiri-ke-Kanan)</h3>
+        <div class="flex flex-wrap items-center justify-center gap-4 mb-6 text-2xl md:text-3xl">
+          <div class="num-display border-gray-400">${a1_state.A}</div>
+          <span class="op-symbol">+</span>
+          <div class="num-display border-gray-400">${a1_state.B}</div>
+          <span class="op-symbol text-red-500">−</span>
+          <div class="num-display border-gray-400">${a1_state.C}</div>
+          <span class="op-symbol">=</span>
+          <div id="a1-result" class="num-display border-blue-500 text-blue-800 bg-blue-50">?</div>
+        </div>
+        
+        <div class="text-4xl mb-4">🚌</div>
+        <div id="a1-step1" class="step-box active" style="border-color: #3b82f6; background-color: #eff6ff;">
+          <p>PERMULAAN: Bas ada <b class="text-xl">${a1_state.A}</b> penumpang.</p>
+        </div>
+        <div id="a1-step2" class="step-box">
+          <p>STESEN 1: <b class="text-xl text-green-600">+${a1_state.B}</b> orang naik. Jumlah kini: <b id="a1-mid-result" class="text-xl">?</b></p>
+        </div>
+        <div id="a1-step3" class="step-box">
+          <p>STESEN 2: <b class="text-xl text-red-600">-${a1_state.C}</b> orang turun. Baki akhir: <b id="a1-final-result" class="text-xl">?</b></p>
+        </div>
+
+         <div class="mt-6 flex flex-wrap gap-3 justify-center">
+           <button id="a1-btn" onclick="runA1Step()" class="bg-blue-500 hover:bg-blue-600 text-white px-5 py-3 rounded-xl text-lg">Stesen Seterusnya ➡️</button>
+           <button onclick="loadActivity(1)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl text-lg">🔄 Perjalanan Baharu</button>
+        </div>
+      `;
+    }
+    function runA1Step() {
+      const { midResult, finalResult, step } = a1_state;
+      const btn = document.getElementById('a1-btn');
+      
+      if (step === 0) {
+        document.getElementById('a1-step1').classList.replace('active', 'done');
+        document.getElementById('a1-step2').classList.add('active');
+        document.getElementById('a1-step2').style.borderColor = '#3b82f6';
+        document.getElementById('a1-step2').style.backgroundColor = '#eff6ff';
+        const midResultEl = document.getElementById('a1-mid-result');
+        midResultEl.textContent = midResult;
+        pulseElement(midResultEl);
+        setInfo(`Jumlah penumpang kini ${midResult}.`);
+        a1_state.step = 1;
+      } else if (step === 1) {
+        document.getElementById('a1-step2').classList.replace('active', 'done');
+        document.getElementById('a1-step3').classList.add('active');
+        document.getElementById('a1-step3').style.borderColor = '#3b82f6';
+        document.getElementById('a1-step3').style.backgroundColor = '#eff6ff';
+        const finalResultEl = document.getElementById('a1-final-result');
+        finalResultEl.textContent = finalResult;
+        pulseElement(finalResultEl);
+        document.getElementById('a1-result').textContent = finalResult;
+        btn.disabled = true;
+        btn.textContent = "Selesai!";
+        setInfo(`Baki penumpang ialah ${finalResult}.`);
+        speak(`Syabas! Jawapannya ialah ${finalResult}.`);
+      }
+    }
+
+    /* ====== Aktiviti 2: Paras Air (A - B + C = ?) ====== */
+    let a2_state = { A: 0, B: 0, C: 0, midResult: 0, finalResult: 0, step: 0 };
+    function loadActivity2(content) {
+      a2_state.A = r(100, 200);
+      a2_state.B = r(30, 80);
+      a2_state.midResult = a2_state.A - a2_state.B;
+      a2_state.C = r(20, 50);
+      a2_state.finalResult = a2_state.midResult + a2_state.C;
+      a2_state.step = 0;
+      
+      setInfo(`Mula ${a2_state.A}L, guna ${a2_state.B}L, tambah ${a2_state.C}L. Berapa baki?`);
+      content.innerHTML = `
+        <h3 class="text-2xl font-bold text-green-600 mb-6">💧 Paras Air</h3>
+        <div class="flex flex-wrap items-center justify-center gap-4 mb-6 text-2xl md:text-3xl">
+          <div class="num-display border-gray-400">${a2_state.A}</div>
+          <span class="op-symbol text-red-500">−</span>
+          <div class="num-display border-gray-400">${a2_state.B}</div>
+          <span class="op-symbol">+</span>
+          <div class="num-display border-gray-400">${a2_state.C}</div>
+          <span class="op-symbol">=</span>
+          <div id="a2-result" class="num-display border-green-500 text-green-800 bg-green-50">?</div>
+        </div>
+        
+        <div class="text-4xl mb-4">💧</div>
+        <div id="a2-step1" class="step-box active" style="border-color: #16a34a; background-color: #f0fdf4;">
+          <p>MULA: Tangki ada <b class="text-xl">${a2_state.A}</b> liter.</p>
+        </div>
+        <div id="a2-step2" class="step-box">
+          <p>PROSES 1: <b class="text-xl text-red-600">-${a2_state.B}</b> liter diguna. Baki kini: <b id="a2-mid-result" class="text-xl">?</b></p>
+        </div>
+        <div id="a2-step3" class="step-box">
+          <p>PROSES 2: <b class="text-xl text-green-600">+${a2_state.C}</b> liter hujan. Baki akhir: <b id="a2-final-result" class="text-xl">?</b></p>
+        </div>
+
+         <div class="mt-6 flex flex-wrap gap-3 justify-center">
+           <button id="a2-btn" onclick="runA2Step()" class="bg-green-500 hover:bg-green-600 text-white px-5 py-3 rounded-xl text-lg">Proses Seterusnya ➡️</button>
+           <button onclick="loadActivity(2)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl text-lg">🔄 Mula Semula</button>
+        </div>
+      `;
+    }
+    function runA2Step() {
+      const { midResult, finalResult, step } = a2_state;
+      const btn = document.getElementById('a2-btn');
+      
+      if (step === 0) {
+        document.getElementById('a2-step1').classList.replace('active', 'done');
+        document.getElementById('a2-step2').classList.add('active');
+        document.getElementById('a2-step2').style.borderColor = '#16a34a';
+        document.getElementById('a2-step2').style.backgroundColor = '#f0fdf4';
+        const midResultEl = document.getElementById('a2-mid-result');
+        midResultEl.textContent = midResult;
+        pulseElement(midResultEl);
+        setInfo(`Baki air kini ${midResult}.`);
+        a2_state.step = 1;
+      } else if (step === 1) {
+        document.getElementById('a2-step2').classList.replace('active', 'done');
+        document.getElementById('a2-step3').classList.add('active');
+        document.getElementById('a2-step3').style.borderColor = '#16a34a';
+        document.getElementById('a2-step3').style.backgroundColor = '#f0fdf4';
+        const finalResultEl = document.getElementById('a2-final-result');
+        finalResultEl.textContent = finalResult;
+        pulseElement(finalResultEl);
+        document.getElementById('a2-result').textContent = finalResult;
+        btn.disabled = true;
+        btn.textContent = "Selesai!";
+        setInfo(`Baki akhir air ialah ${finalResult}.`);
+        speak(`Syabas! Jawapannya ialah ${finalResult}.`);
+      }
+    }
+
+    /* ====== Aktiviti 3: Kira Ikut Langkah (Input) ====== */
+    let a3_state = { A: 0, B: 0, C: 0, midResult: 0, finalResult: 0 };
+    function loadActivity3(content) {
+      a3_state.A = r(80, 150);
+      a3_state.B = r(30, 80);
+      a3_state.midResult = a3_state.A + a3_state.B;
+      a3_state.C = r(20, 50);
+      a3_state.finalResult = a3_state.midResult - a3_state.C;
+      
+      setInfo("Selesaikan langkah 1 dahulu, kemudian langkah 2.");
+      content.innerHTML = `
+        <h3 class="text-2xl font-bold text-purple-600 mb-6">⌨️ Kira Ikut Langkah</h3>
+        <div class="flex flex-wrap items-center justify-center gap-4 mb-6 text-2xl md:text-3xl">
+          ${a3_state.A} + ${a3_state.B} − ${a3_state.C} = <span id="a3-final-answer" class="font-bold text-purple-700">?</span>
+        </div>
+        
+        <div class="w-full max-w-md mx-auto">
+          <div id="a3-step1" class="mb-4">
+            <label class="font-semibold text-lg">Langkah 1: ${a3_state.A} + ${a3_state.B}</label>
+            <input id="a3-input1" type="number" onchange="checkA3Step1()" class="num-input border-purple-300 w-full mt-2" placeholder="Taip jawapan 1">
+          </div>
+          
+          <div id="a3-step2" class="mb-4 hidden fade-in">
+            <label class="font-semibold text-lg">Langkah 2: <span id="a3-mid-val"></span> − ${a3_state.C}</label>
+            <input id="a3-input2" type="number" onchange="checkA3Step2()" class="num-input border-purple-300 w-full mt-2" placeholder="Taip jawapan 2">
+          </div>
+        </div>
+        
+        <div id="a3-feedback" class="text-lg font-semibold text-green-700 min-h-6 mt-4"></div>
+         <div class="mt-6 flex flex-wrap gap-3 justify-center">
+           <button onclick="loadActivity(3)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl text-lg">🔄 Soalan Baharu</button>
+        </div>
+      `;
+    }
+    function checkA3Step1() {
+      const { midResult } = a3_state;
+      const inputEl = document.getElementById('a3-input1');
+      const answer = parseInt(inputEl.value);
+      if (answer === midResult) {
+        inputEl.disabled = true;
+        inputEl.classList.add('border-green-500', 'bg-green-50');
+        document.getElementById('a3-mid-val').textContent = midResult;
+        document.getElementById('a3-step2').classList.remove('hidden');
+        setInfo("Betul! Sekarang langkah kedua.");
+      } else {
+        shakeElement(inputEl);
+        setInfo("Bukan. Cuba kira ${a3_state.A} + ${a3_state.B} semula.");
+      }
+    }
+    function checkA3Step2() {
+      const { finalResult } = a3_state;
+      const inputEl = document.getElementById('a3-input2');
+      const answer = parseInt(inputEl.value);
+      if (answer === finalResult) {
+        inputEl.disabled = true;
+        inputEl.classList.add('border-green-500', 'bg-green-50');
+        document.getElementById('a3-final-answer').textContent = finalResult;
+        document.getElementById('a3-feedback').textContent = "Syabas! Jawapan Tepat!";
+        setInfo(`Syabas! Jawapannya ialah ${finalResult}.`);
+        speak(`Syabas! Jawapannya ialah ${finalResult}.`);
+      } else {
+        shakeElement(inputEl);
+        setInfo("Hampir. Cuba kira baki terakhir.");
+      }
+    }
+
+    /* ====== Aktiviti 4: Pembina Persamaan (Urutan) ====== */
+    let a4_state = { A: 0, B: 0, C: 0, midResult: 0, finalResult: 0, step: 0 };
+    function loadActivity4(content) {
+      a4_state.A = r(100, 200);
+      a4_state.B = r(50, 100);
+      a4_state.C = r(20, 50);
+      a4_state.midResult = a4_state.A + a4_state.B;
+      a4_state.finalResult = a4_state.midResult - a4_state.C;
+      a4_state.step = 0;
+      
+      setInfo("Lihat bagaimana komputer mengira gabungan operasi, langkah demi langkah.");
+      content.innerHTML = `
+        <h3 class="text-2xl font-bold text-orange-600 mb-6">🧩 Pembina Persamaan (Lihat Urutan)</h3>
+        
+        <div id="a4-equation" class="flex flex-wrap items-center justify-center p-4 mb-6" style="min-height: 100px;">
+          <div id="box-a" class="eq-box">${a4_state.A}</div>
+          <div id="box-op1" class="eq-box op">+</div>
+          <div id="box-b" class="eq-box">${a4_state.B}</div>
+          <div id="box-op2" class="eq-box op">−</div>
+          <div id="box-c" class="eq-box">${a4_state.C}</div>
+        </div>
+        
+        <div id="a4-feedback" class="text-lg font-semibold text-gray-700 min-h-6 mt-6">
+          Operasi gabungan sentiasa dikira dari kiri ke kanan.
+        </div>
+        
+         <div class="mt-8 flex flex-wrap gap-3 justify-center">
+           <button id="a4-step-btn" onclick="runA4Step()" class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-xl text-lg">Kira Langkah Seterusnya ➡️</button>
+           <button onclick="loadActivity(4)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl text-lg">🔄 Soalan Baharu</button>
+        </div>
+      `;
+    }
+    function runA4Step() {
+      const { A, B, C, midResult, finalResult, step } = a4_state;
+      const feedbackEl = document.getElementById('a4-feedback');
+      const stepBtn = document.getElementById('a4-step-btn');
+      
+      if (step === 0) {
+        document.getElementById('box-a').classList.add('faded');
+        document.getElementById('box-op1').classList.add('faded');
+        const boxB = document.getElementById('box-b');
+        boxB.textContent = midResult;
+        boxB.classList.add('merged');
+        feedbackEl.textContent = `Langkah 1: ${A} + ${B} = ${midResult}.`;
+        stepBtn.textContent = "Kira Langkah Akhir ➡️";
+        a4_state.step = 1;
+      } else if (step === 1) {
+        document.getElementById('box-b').classList.add('faded');
+        document.getElementById('box-op2').classList.add('faded');
+        const boxC = document.getElementById('box-c');
+        boxC.textContent = finalResult;
+        boxC.classList.add('merged');
+        feedbackEl.textContent = `Langkah 2: ${midResult} - ${C} = ${finalResult}. Selesai!`;
+        stepBtn.disabled = true;
+        stepBtn.textContent = "Selesai!";
+        setInfo(`Hasilnya ialah ${finalResult}.`);
+        speak(`Hasilnya ialah ${finalResult}.`);
+      }
+    }
+
+    /* ====== Aktiviti 5: Tembak Belon (Input Pantas) ====== */
+    let a5_state = { A: 0, B: 0, C: 0, finalResult: 0 };
+    function loadActivity5(content) {
+      a5_state.A = r(50, 100);
+      a5_state.B = r(20, 50);
+      a5_state.C = r(10, 30);
+      a5_state.finalResult = a5_state.A + a5_state.B - a5_state.C;
+      
+      setInfo("Kira soalan ini secepat mungkin!");
+      content.innerHTML = `
+        <h3 class="text-2xl font-bold text-red-600 mb-6">🎯 Tembak Belon</h3>
+        
+        <div class="my-8">
+          <div class="text-9xl">🎈</div>
+          <div class="bg-white border-2 border-gray-300 shadow-lg rounded-xl p-4 w-auto inline-block -mt-8">
+            <span class="text-3xl font-bold text-gray-800">${a5_state.A} + ${a5_state.B} − ${a5_state.C} = ?</span>
+          </div>
+        </div>
+        
+        <div class="flex flex-wrap items-center justify-center gap-2">
+           <input id="a5-input" type="number" class="num-input border-red-300" placeholder="Jawapan">
+           <button id="a5-btn" onclick="checkA5Answer()" class="bg-red-500 hover:bg-red-600 text-white px-5 py-3 rounded-xl text-lg">Tembak! 🏹</button>
+        </div>
+        
+        <div id="a5-feedback" class="text-lg font-semibold text-gray-700 min-h-6 mt-6">
+          Kira jawapan dan tekan 'Tembak!'
+        </div>
+        
+         <div class="mt-8 flex flex-wrap gap-3 justify-center">
+           <button onclick="loadActivity(5)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl text-lg">🔄 Soalan Baharu</button>
+        </div>
+      `;
+    }
+    function checkA5Answer() {
+      const { finalResult } = a5_state;
+      const inputEl = document.getElementById('a5-input');
+      const feedbackEl = document.getElementById('a5-feedback');
+      const btn = document.getElementById('a5-btn');
+      const answer = parseInt(inputEl.value);
+      
+      if (answer === finalResult) {
+        feedbackEl.innerHTML = `<span class="text-green-600 text-2xl font-bold">POP! 💥 Betul!</span>`;
+        inputEl.disabled = true;
+        btn.disabled = true;
+        inputEl.classList.add('border-green-500', 'bg-green-50');
+        setInfo(`Betul! Jawapannya ${finalResult}.`);
+        speak(`Pop! Betul!`);
+      } else {
+        feedbackEl.innerHTML = `<span class="text-red-600 font-bold">Tersasar! Cuba lagi.</span>`;
+        shakeElement(inputEl);
+        setInfo("Jawapan salah. Cuba kira semula.");
+      }
+    }
+
+
+    /* ====== Kawalan Umum ====== */
+    function clearActivity() {
+      currentActivity = 0;
+      document.getElementById('activity-content').innerHTML = `
+        <div class="text-center py-16">
+          <div class="text-6xl mb-4">📈📉</div>
+          <h2 class="text-3xl font-bold text-gray-800 mb-4">Kemahiran Pemulihan: Gabungan Operasi (+/-)</h2>
+          <p class="text-xl text-gray-600 mb-8">Teroka bagaimana operasi tambah dan tolak berfungsi bersama.</p>
+          <div class="text-4xl">👇</div>
+        </div>
+      `;
+      setInfo("Pilih aktiviti untuk mula!");
+    }
+    function nextActivity() {
+      if (currentActivity === 0) return loadActivity(1);
+      if (currentActivity < 5) return loadActivity(currentActivity + 1);
+      return loadActivity(1);
+    }
+
+    // Kekalkan TTS resume pada sesetengah pelayar
+    if ('speechSynthesis' in window) {
+      setInterval(() => { if (window.speechSynthesis.paused) window.speechSynthesis.resume(); }, 1000);
+    }
+  </script>
+</body>
+</html>
